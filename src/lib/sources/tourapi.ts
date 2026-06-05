@@ -3,7 +3,7 @@ import type { FetchOptions, SourceAdapter } from './types'
 // 한국관광공사 TourAPI 4.0 (KorService2). 축제/행사 검색(searchFestival2).
 const BASE = 'https://apis.data.go.kr/B551011/KorService2'
 
-// TourAPI areacode → 시도명
+// TourAPI areacode → 시도명 (areacode가 채워져 오는 경우 우선 사용)
 const AREA_SIDO: Record<string, string> = {
   '1': '서울특별시', '2': '인천광역시', '3': '대전광역시', '4': '대구광역시',
   '5': '광주광역시', '6': '부산광역시', '7': '울산광역시', '8': '세종특별자치시',
@@ -22,8 +22,8 @@ interface TourItem {
   mapy?: string | number // 위도(lat)
   eventstartdate?: string // YYYYMMDD
   eventenddate?: string // YYYYMMDD
-  firstimage?: string // 원본 이미지
-  firstimage2?: string // 썸네일
+  firstimage?: string
+  firstimage2?: string
   tel?: string
   areacode?: string | number
   sigungucode?: string | number
@@ -41,15 +41,15 @@ export const tourApiAdapter: SourceAdapter<TourItem> = {
 
     while (pageNo <= maxPages) {
       const url = new URL(`${BASE}/searchFestival2`)
-      // 공공데이터포털 "일반 인증키(Decoding)"를 넣을 것. searchParams가 자동 인코딩한다.
+      // 공공데이터포털 "일반 인증키(Decoding)" 사용. searchParams가 자동 인코딩한다.
       url.searchParams.set('serviceKey', key)
       url.searchParams.set('MobileOS', 'ETC')
       url.searchParams.set('MobileApp', 'LocalEventCalendar')
       url.searchParams.set('_type', 'json')
       url.searchParams.set('numOfRows', String(numOfRows))
       url.searchParams.set('pageNo', String(pageNo))
-      url.searchParams.set('arrange', 'C') // 수정일순(대표이미지 포함 우선)
-      url.searchParams.set('eventStartDate', compactToday(-30)) // 최근 30일 내 시작분부터
+      url.searchParams.set('arrange', 'C')
+      url.searchParams.set('eventStartDate', compactToday(-30)) // 필수 파라미터
 
       const res = await fetch(url)
       if (!res.ok) throw new Error(`TourAPI HTTP ${res.status}`)
@@ -84,13 +84,27 @@ export const tourApiAdapter: SourceAdapter<TourItem> = {
       address,
       lat: toCoord(it.mapy),
       lng: toCoord(it.mapx),
-      regionSido: it.areacode != null ? (AREA_SIDO[String(it.areacode)] ?? null) : null,
+      regionSido: resolveSido(it),
+      regionSigungu: addrToken(it.addr1, 1),
       priceType: 'unknown',
       thumbnailUrl: it.firstimage2 || it.firstimage || null,
       images: [it.firstimage].filter((v): v is string => Boolean(v)),
       tags: ['축제'],
     }
   },
+}
+
+// searchFestival2 응답에 areacode가 비어오는 경우가 있어, 주소(addr1) 첫 토큰으로 시도를 보완.
+function resolveSido(item: TourItem): string | null {
+  const code = item.areacode != null ? String(item.areacode) : ''
+  if (code && AREA_SIDO[code]) return AREA_SIDO[code]
+  return addrToken(item.addr1, 0)
+}
+
+// addr1 의 n번째 공백 토큰 (0='충청북도', 1='음성군' 등)
+function addrToken(addr1: string | undefined, n: number): string | null {
+  if (!addr1) return null
+  return addr1.trim().split(/\s+/)[n] ?? null
 }
 
 function asArray<T>(v: T | T[] | undefined | null): T[] {

@@ -1,6 +1,6 @@
 import type { EventInsert, NormalizedEvent } from '@/types/event'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { geocodeAddress } from '@/lib/geocode/kakao'
+import { geocodeAddress } from '@/lib/geocode/vworld'
 import { contentHash } from '@/lib/dedup/hash'
 import type { FetchOptions, SourceAdapter } from './types'
 
@@ -22,6 +22,7 @@ export async function runIngest(
   options?: FetchOptions,
 ): Promise<IngestResult> {
   const admin = createAdminClient()
+  const canGeocode = Boolean(process.env.VWORLD_API_KEY)
   const result: IngestResult = { fetched: 0, upserted: 0, skipped: 0, geocoded: 0 }
 
   // 배치 내 (source_id, external_id) 중복은 마지막 값으로 합쳐 upsert 충돌을 피한다.
@@ -47,14 +48,19 @@ export async function runIngest(
       continue
     }
 
-    // 좌표가 없고 주소/장소명이 있으면 지오코딩으로 보강
-    if ((ev.lat == null || ev.lng == null) && ev.address) {
-      const geo = await geocodeAddress(ev.address)
-      if (geo) {
-        ev.lat = geo.lat
-        ev.lng = geo.lng
-        ev.roadAddress = ev.roadAddress ?? geo.roadAddress
-        result.geocoded++
+    // 좌표가 없고 주소/장소명이 있으면 지오코딩으로 보강.
+    // VWorld 키가 있을 때만 시도하고, 실패(rate limit 등)는 좌표 없이 넘긴다 — 수집 자체를 막지 않는다.
+    if (canGeocode && (ev.lat == null || ev.lng == null) && ev.address) {
+      try {
+        const geo = await geocodeAddress(ev.address)
+        if (geo) {
+          ev.lat = geo.lat
+          ev.lng = geo.lng
+          ev.roadAddress = ev.roadAddress ?? geo.roadAddress
+          result.geocoded++
+        }
+      } catch {
+        // 무시: location 은 null 로 저장되고 리스트에는 노출됨(지도 핀만 빠짐)
       }
     }
 

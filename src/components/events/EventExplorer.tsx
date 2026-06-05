@@ -1,7 +1,8 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
+import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
 import { useEvents } from '@/hooks/useEvents'
 import { FilterBar, type FilterState } from '@/components/filters/FilterBar'
@@ -19,13 +20,14 @@ const MapView = dynamic(() => import('@/components/map/MapView'), {
 })
 
 export function EventExplorer() {
+  const router = useRouter()
   const [filter, setFilter] = useState<FilterState>({
     categories: [],
     freeOnly: false,
     q: '',
   })
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const listRef = useRef<HTMLDivElement>(null)
 
   // 날짜는 클라이언트에서 필터(캘린더는 월 전체를 봐야 하므로) → 서버엔 카테고리/무료/검색만 전달
   const { data, isLoading, isError } = useEvents({
@@ -42,6 +44,13 @@ export function EventExplorer() {
       (e) => e.startDate <= selectedDate && selectedDate <= e.endDate,
     )
   }, [allEvents, selectedDate])
+
+  // 캘린더가 길어 리스트가 화면 밖으로 밀리므로, 날짜 선택 시 리스트로 스크롤
+  useEffect(() => {
+    if (selectedDate) {
+      listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [selectedDate])
 
   return (
     <div className="flex h-full flex-col lg:flex-row">
@@ -61,29 +70,28 @@ export function EventExplorer() {
 
         <CalendarView
           events={allEvents}
+          selectedDate={selectedDate}
           onDateClick={setSelectedDate}
-          onEventClick={setSelectedId}
+          onEventClick={(id) => router.push(`/events/${id}`)}
         />
 
-        <div>
-          <div className="mb-2 text-sm text-zinc-500">
+        <div ref={listRef} className="scroll-mt-2">
+          <div className="mb-2 text-sm font-medium text-zinc-600 dark:text-zinc-300">
             {isLoading
               ? '불러오는 중…'
               : isError
                 ? '불러오기 실패'
-                : `${visibleEvents.length}건`}
+                : selectedDate
+                  ? `${selectedDate} · ${visibleEvents.length}건`
+                  : `전체 ${visibleEvents.length}건`}
           </div>
-          <EventList
-            events={visibleEvents}
-            selectedId={selectedId}
-            onSelect={(e) => setSelectedId(e.id)}
-          />
+          <EventList events={visibleEvents} />
         </div>
       </div>
 
       {/* 우: 지도 */}
       <div className="h-72 flex-1 lg:h-auto">
-        <MapView events={visibleEvents} onSelect={(e) => setSelectedId(e.id)} />
+        <MapView events={visibleEvents} />
       </div>
     </div>
   )

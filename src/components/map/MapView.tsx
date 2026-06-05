@@ -2,12 +2,12 @@
 
 import { useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import Link from 'next/link'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { EventListItem } from '@/types/api'
-import { CATEGORY_COLOR, CATEGORY_LABEL, formatDateRange } from '@/lib/format'
+import { CATEGORY_LABEL, formatDateRange } from '@/lib/format'
 
-// 카테고리 색상 원형 마커(기본 마커 이미지 깨짐 회피용 divIcon)
 function pinIcon(color: string) {
   return L.divIcon({
     className: '',
@@ -17,13 +17,18 @@ function pinIcon(color: string) {
   })
 }
 
-export default function MapView({
-  events,
-  onSelect,
-}: {
-  events: EventListItem[]
-  onSelect?: (event: EventListItem) => void
-}) {
+// 시작일이 오늘에 가까울수록 밝게(명도↑), 멀수록 어둡게(명도↓). 진행 중이면 가장 밝음.
+function proximityColor(startDate: string): string {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const start = new Date(`${startDate}T00:00:00`)
+  const days = Math.max(0, Math.round((start.getTime() - today.getTime()) / 86400000))
+  const t = 1 - Math.min(days, 30) / 30 // 가까울수록 1, 30일 이상이면 0
+  const lightness = Math.round(32 + t * 28) // 32%(먼)~60%(가까운)
+  return `hsl(14, 88%, ${lightness}%)`
+}
+
+export default function MapView({ events }: { events: EventListItem[] }) {
   const pinned = events.filter(
     (e): e is EventListItem & { lat: number; lng: number } =>
       e.lat != null && e.lng != null,
@@ -45,8 +50,7 @@ export default function MapView({
         <Marker
           key={e.id}
           position={[e.lat, e.lng]}
-          icon={pinIcon(CATEGORY_COLOR[e.category])}
-          eventHandlers={{ click: () => onSelect?.(e) }}
+          icon={pinIcon(proximityColor(e.startDate))}
         >
           <Popup>
             <div className="text-sm">
@@ -55,6 +59,12 @@ export default function MapView({
                 {CATEGORY_LABEL[e.category]} · {formatDateRange(e.startDate, e.endDate)}
               </div>
               {e.venueName && <div className="text-zinc-500">{e.venueName}</div>}
+              <Link
+                href={`/events/${e.id}`}
+                className="mt-1 inline-block font-medium text-indigo-600 underline"
+              >
+                상세 보기 →
+              </Link>
             </div>
           </Popup>
         </Marker>

@@ -1,24 +1,12 @@
+import Link from 'next/link'
 import type { EventListItem } from '@/types/api'
 import { CATEGORY_COLOR, CATEGORY_LABEL, formatDateRange } from '@/lib/format'
 
-export function EventCard({
-  event,
-  selected,
-  onClick,
-}: {
-  event: EventListItem
-  selected?: boolean
-  onClick?: () => void
-}) {
+export function EventCard({ event }: { event: EventListItem }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex w-full gap-3 rounded-lg border p-3 text-left transition hover:bg-zinc-50 dark:hover:bg-zinc-900 ${
-        selected
-          ? 'border-zinc-900 dark:border-zinc-100'
-          : 'border-zinc-200 dark:border-zinc-800'
-      }`}
+    <Link
+      href={`/events/${event.id}`}
+      className="flex w-full gap-3 rounded-lg border border-zinc-200 p-3 text-left transition hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
     >
       <span
         className="mt-0.5 h-12 w-1.5 shrink-0 rounded-full"
@@ -52,6 +40,6 @@ export function EventCard({
           </p>
         )}
       </div>
-    </button>
+    </Link>
   )
 }

@@ -1,15 +1,7 @@
 import type { EventListItem } from '@/types/api'
 import { EventCard } from './EventCard'
 
-export function EventList({
-  events,
-  selectedId,
-  onSelect,
-}: {
-  events: EventListItem[]
-  selectedId?: string | null
-  onSelect?: (event: EventListItem) => void
-}) {
+export function EventList({ events }: { events: EventListItem[] }) {
   if (events.length === 0) {
     return (
       <p className="px-1 py-8 text-center text-sm text-zinc-400">
@@ -21,12 +13,7 @@ export function EventList({
   return (
     <div className="flex flex-col gap-2">
       {events.map((e) => (
-        <EventCard
-          key={e.id}
-          event={e}
-          selected={e.id === selectedId}
-          onClick={() => onSelect?.(e)}
-        />
+        <EventCard key={e.id} event={e} />
       ))}
     </div>
   )

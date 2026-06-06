@@ -48,13 +48,20 @@ export function EventExplorer() {
     )
   }, [allEvents, filter.sidos])
 
-  // 선택 날짜 필터(리스트·지도에만 — 캘린더는 월 전체를 봐야 함)
+  // 오늘 날짜(YYYY-MM-DD, 로컬) — 종료된 행사 제외용
+  const today = useMemo(() => new Date().toLocaleDateString('sv-SE'), [])
+
+  // 리스트·지도 표시:
+  //  - 날짜 선택 시: 그 날 진행 중인 것
+  //  - 미선택 시: 아직 끝나지 않은 것(종료일 ≥ 오늘) — 이미 끝난 행사 제외
   const visibleEvents = useMemo(() => {
-    if (!selectedDate) return regionFiltered
-    return regionFiltered.filter(
-      (e) => e.startDate <= selectedDate && selectedDate <= e.endDate,
-    )
-  }, [regionFiltered, selectedDate])
+    if (selectedDate) {
+      return regionFiltered.filter(
+        (e) => e.startDate <= selectedDate && selectedDate <= e.endDate,
+      )
+    }
+    return regionFiltered.filter((e) => e.endDate >= today)
+  }, [regionFiltered, selectedDate, today])
 
   // 캘린더가 길어 리스트가 화면 밖으로 밀리므로, 날짜 선택 시 리스트로 스크롤
   useEffect(() => {

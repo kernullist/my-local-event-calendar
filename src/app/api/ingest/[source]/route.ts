@@ -1,5 +1,6 @@
 import { isAuthorizedCron } from '@/lib/cron'
 import { runIngest } from '@/lib/sources/pipeline'
+import { culturePortalAdapter } from '@/lib/sources/cultureportal'
 import { seoulAdapter } from '@/lib/sources/seoul'
 import { tourApiAdapter } from '@/lib/sources/tourapi'
 import type { SourceAdapter } from '@/lib/sources/types'
@@ -11,6 +12,7 @@ export const dynamic = 'force-dynamic'
 const ADAPTERS: Record<string, SourceAdapter> = {
   tourapi: tourApiAdapter,
   seoul: seoulAdapter,
+  culture: culturePortalAdapter,
 }
 
 /**

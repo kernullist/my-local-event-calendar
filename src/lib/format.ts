@@ -25,6 +25,27 @@ export const CATEGORY_ORDER: EventCategory[] = [
   'exhibition', 'festival', 'concert', 'performance', 'popup', 'academic', 'etc',
 ]
 
+// 지역 필터 옵션(정식 시도명 → 짧은 표기). region_sido 값과 매칭.
+export const SIDO_OPTIONS: { value: string; label: string }[] = [
+  { value: '서울특별시', label: '서울' },
+  { value: '경기도', label: '경기' },
+  { value: '인천광역시', label: '인천' },
+  { value: '강원특별자치도', label: '강원' },
+  { value: '충청북도', label: '충북' },
+  { value: '충청남도', label: '충남' },
+  { value: '대전광역시', label: '대전' },
+  { value: '세종특별자치시', label: '세종' },
+  { value: '전북특별자치도', label: '전북' },
+  { value: '전라남도', label: '전남' },
+  { value: '광주광역시', label: '광주' },
+  { value: '경상북도', label: '경북' },
+  { value: '경상남도', label: '경남' },
+  { value: '대구광역시', label: '대구' },
+  { value: '부산광역시', label: '부산' },
+  { value: '울산광역시', label: '울산' },
+  { value: '제주특별자치도', label: '제주' },
+]
+
 export function priceLabel(price: PriceType, min?: number | null): string {
   if (price === 'free') return '무료'
   if (price === 'paid') return min ? `${min.toLocaleString()}원~` : '유료'

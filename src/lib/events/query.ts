@@ -24,7 +24,7 @@ export const EventQuerySchema = z.object({
   radius: z.coerce.number().int().positive().max(50000).optional(), // meters
   sort: z.enum(['date', 'distance']).default('date'),
   page: z.coerce.number().int().min(1).default(1),
-  pageSize: z.coerce.number().int().min(1).max(500).default(50),
+  pageSize: z.coerce.number().int().min(1).max(1000).default(50),
 })
 export type EventQuery = z.infer<typeof EventQuerySchema>
 

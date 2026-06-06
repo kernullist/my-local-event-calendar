@@ -1,4 +1,4 @@
-export type SourceId = 'tourapi' | 'seoul'
+export type SourceId = 'tourapi' | 'seoul' | 'culture'
 
 export type EventCategory =
   | 'exhibition' // 전시

@@ -13,9 +13,16 @@ export interface IngestResult {
 
 const BATCH_SIZE = 500
 
+// events.source_id 외래키 충족을 위한 소스 메타(수집 시 자동 등록)
+const SOURCE_NAMES: Record<string, string> = {
+  tourapi: '한국관광공사 TourAPI 4.0',
+  seoul: '서울 열린데이터광장 문화행사',
+  culture: '한국문화정보원 한눈에보는문화정보',
+}
+
 /**
  * 공통 수집 파이프라인:
- *   fetchRaw → normalize → (좌표 없으면)지오코딩 → 배치 upsert → sources.last_synced_at 갱신
+ *   sources 보장 → fetchRaw → normalize → (좌표 없으면)지오코딩 → 배치 upsert → last_synced_at 갱신
  */
 export async function runIngest(
   adapter: SourceAdapter,
@@ -24,6 +31,14 @@ export async function runIngest(
   const admin = createAdminClient()
   const canGeocode = Boolean(process.env.VWORLD_API_KEY)
   const result: IngestResult = { fetched: 0, upserted: 0, skipped: 0, geocoded: 0 }
+
+  // 소스 행 보장(events 외래키) — 없으면 등록, 있으면 유지
+  await admin
+    .from('sources')
+    .upsert(
+      { id: adapter.id, name: SOURCE_NAMES[adapter.id] ?? adapter.id },
+      { onConflict: 'id', ignoreDuplicates: true },
+    )
 
   // 배치 내 (source_id, external_id) 중복은 마지막 값으로 합쳐 upsert 충돌을 피한다.
   let batch = new Map<string, EventInsert>()

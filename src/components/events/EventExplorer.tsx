@@ -23,27 +23,38 @@ export function EventExplorer() {
   const router = useRouter()
   const [filter, setFilter] = useState<FilterState>({
     categories: [],
+    sidos: [],
     freeOnly: false,
     q: '',
   })
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
-  // 날짜는 클라이언트에서 필터(캘린더는 월 전체를 봐야 하므로) → 서버엔 카테고리/무료/검색만 전달
+  // 카테고리/무료/검색은 서버 필터, 지역·날짜는 클라이언트 필터
   const { data, isLoading, isError } = useEvents({
     category: filter.categories.join(',') || undefined,
     price: filter.freeOnly ? 'free' : undefined,
     q: filter.q || undefined,
-    pageSize: 500,
+    pageSize: 800,
   })
 
   const allEvents = useMemo(() => data?.items ?? [], [data])
-  const visibleEvents = useMemo(() => {
-    if (!selectedDate) return allEvents
+
+  // 지역 필터(캘린더·리스트·지도 공통 적용)
+  const regionFiltered = useMemo(() => {
+    if (filter.sidos.length === 0) return allEvents
     return allEvents.filter(
+      (e) => e.regionSido != null && filter.sidos.includes(e.regionSido),
+    )
+  }, [allEvents, filter.sidos])
+
+  // 선택 날짜 필터(리스트·지도에만 — 캘린더는 월 전체를 봐야 함)
+  const visibleEvents = useMemo(() => {
+    if (!selectedDate) return regionFiltered
+    return regionFiltered.filter(
       (e) => e.startDate <= selectedDate && selectedDate <= e.endDate,
     )
-  }, [allEvents, selectedDate])
+  }, [regionFiltered, selectedDate])
 
   // 캘린더가 길어 리스트가 화면 밖으로 밀리므로, 날짜 선택 시 리스트로 스크롤
   useEffect(() => {
@@ -69,7 +80,7 @@ export function EventExplorer() {
         )}
 
         <CalendarView
-          events={allEvents}
+          events={regionFiltered}
           selectedDate={selectedDate}
           onDateClick={setSelectedDate}
           onEventClick={(id) => router.push(`/events/${id}`)}

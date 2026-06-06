@@ -40,6 +40,13 @@ export function FilterBar({
     })
   }
 
+  const neutralChip = (active: boolean) =>
+    `rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+      active
+        ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
+        : 'border-zinc-200 text-zinc-500 hover:border-zinc-400 dark:border-zinc-700'
+    }`
+
   return (
     <div className="flex flex-col gap-3">
       <input
@@ -50,51 +57,71 @@ export function FilterBar({
         className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900"
       />
 
-      {/* 카테고리 */}
-      <div className="flex flex-wrap gap-1.5">
-        {CATEGORY_ORDER.map((c) => {
-          const active = state.categories.includes(c)
-          return (
-            <button
-              key={c}
-              type="button"
-              onClick={() => toggleCategory(c)}
-              className="rounded-full border px-2.5 py-1 text-xs font-medium transition"
-              style={
-                active
-                  ? {
-                      backgroundColor: CATEGORY_COLOR[c],
-                      color: 'white',
-                      borderColor: CATEGORY_COLOR[c],
-                    }
-                  : { borderColor: '#e4e4e7', color: '#71717a' }
-              }
-            >
-              {CATEGORY_LABEL[c]}
-            </button>
-          )
-        })}
+      {/* 분야(카테고리) */}
+      <div className="flex flex-col gap-1.5">
+        <span className="text-xs font-medium text-zinc-400">분야</span>
+        <div className="flex flex-wrap gap-1.5">
+          <button
+            type="button"
+            onClick={() => onChange({ ...state, categories: [] })}
+            className={neutralChip(state.categories.length === 0)}
+          >
+            전체
+          </button>
+          {CATEGORY_ORDER.map((c) => {
+            const active = state.categories.includes(c)
+            return (
+              <button
+                key={c}
+                type="button"
+                onClick={() => toggleCategory(c)}
+                className="rounded-full border px-2.5 py-1 text-xs font-medium transition"
+                style={
+                  active
+                    ? {
+                        backgroundColor: CATEGORY_COLOR[c],
+                        color: 'white',
+                        borderColor: CATEGORY_COLOR[c],
+                      }
+                    : { borderColor: '#e4e4e7', color: '#71717a' }
+                }
+              >
+                {CATEGORY_LABEL[c]}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {/* 지역(시도) */}
-      <div className="flex flex-wrap gap-1">
-        {SIDO_OPTIONS.map(({ value, label }) => {
-          const active = state.sidos.includes(value)
-          return (
-            <button
-              key={value}
-              type="button"
-              onClick={() => toggleSido(value)}
-              className={`rounded-full border px-2 py-0.5 text-xs transition ${
-                active
-                  ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
-                  : 'border-zinc-200 text-zinc-500 hover:border-zinc-400 dark:border-zinc-700'
-              }`}
-            >
-              {label}
-            </button>
-          )
-        })}
+      <div className="flex flex-col gap-1.5">
+        <span className="text-xs font-medium text-zinc-400">지역</span>
+        <div className="flex flex-wrap gap-1">
+          <button
+            type="button"
+            onClick={() => onChange({ ...state, sidos: [] })}
+            className={neutralChip(state.sidos.length === 0)}
+          >
+            전체
+          </button>
+          {SIDO_OPTIONS.map(({ value, label }) => {
+            const active = state.sidos.includes(value)
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => toggleSido(value)}
+                className={`rounded-full border px-2 py-0.5 text-xs transition ${
+                  active
+                    ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
+                    : 'border-zinc-200 text-zinc-500 hover:border-zinc-400 dark:border-zinc-700'
+                }`}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       <label className="flex w-fit cursor-pointer items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">

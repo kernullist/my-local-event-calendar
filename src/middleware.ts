@@ -29,9 +29,10 @@ export function middleware(req: NextRequest) {
     if (u === user && p === pass) return NextResponse.next()
   }
 
+  // realm 값은 반드시 ASCII (한글이면 브라우저가 인증창을 띄우지 않음)
   return new NextResponse('인증이 필요합니다.', {
     status: 401,
-    headers: { 'WWW-Authenticate': 'Basic realm="로컬 이벤트 캘린더"' },
+    headers: { 'WWW-Authenticate': 'Basic realm="Restricted"' },
   })
 }
 
